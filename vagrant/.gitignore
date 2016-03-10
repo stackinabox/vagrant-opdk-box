@@ -1,0 +1,4 @@
+# Vagrant
+.vagrant
+.DS_Store
+config.json
