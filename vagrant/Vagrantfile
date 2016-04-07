@@ -6,30 +6,51 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
+    unless Vagrant.has_plugin?("vagrant-multi-hostsupdater")
+      raise 'vagrant-multi-hostsupdater plugin is required for'
+      raise 'local server name resolution i.e. cloud9.stackinabox.io'
+      raise 'needs to be overriden on the host to point to the'
+      raise 'instance running locally.'
+      raise ''
+      raise 'Install plugin via:'
+      raise ''
+      raise 'vagrant plugin install vagrant-multi-hostsupdater'
+      raise ''
+      raise '### NOTE ###'
+      raise ''
+      raise 'You may be prompted to grant permissions to the vagrant'
+      raise 'application to allow us to write to your /etc/hosts file'
+      raise 'Please grant the permission. We promise to remove any'
+      raise 'entries we create when you shutdown this vagrant environment'
+    end
+
     if Vagrant.has_plugin?("vagrant-vbguest")
       config.vbguest.auto_update = false
     end
 
-    config.vm.define "devstack" do |devstack|
+    # disabling the default shared /vagrant folder in this vm
+    config.vm.synced_folder ".", "/vagrant", disabled: true
 
-      devstack.vm.box = "devstack"
-      devstack.vm.box_url = "https://stackinabox-vagrant-boxes.bintray.io/devstack"
-      devstack.vm.host_name = "devstack"
+    config.vm.define "openstack" do |openstack|
+
+      openstack.vm.box = "stackinabox/openstack"
 
       # eth1, this will be OpenStacks's "management" network
-      devstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
+      openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
 
       # eth2, this will be OpenStack's "public" network
-      devstack.vm.network "private_network", ip: "172.24.4.225", adapter_ip: "172.24.4.225", netmask: "255.255.255.0", auto_config: false
+      openstack.vm.network "private_network", ip: "172.24.4.225", adapter_ip: "172.24.4.225", netmask: "255.255.255.0", auto_config: false
 
-      devstack.ssh.insert_key = true
+      #openstack.vm.hostname = "openstack.stackinabox.io"
 
-      devstack.vm.provider :virtualbox do |vb|
+      openstack.ssh.insert_key = true
+
+      openstack.vm.provider :virtualbox do |vb|
           # vb.gui = true
           # Use VBoxManage to customize the VM.
           vb.customize ["modifyvm", :id, "--ioapic", "on"] # turn on I/O APIC
           vb.customize ["modifyvm", :id, "--cpus", "4"] # set number of vcpus
-          vb.customize ["modifyvm", :id, "--memory", "8192"] # set amount of memory allocated vm memory
+          vb.customize ["modifyvm", :id, "--memory", "6144"] # set amount of memory allocated vm memory
           vb.customize ["modifyvm", :id, "--hwvirtex", "on"] # turn on host hardware virtualization extensions (VT-x|AMD-V)
           vb.customize ["modifyvm", :id, "--ostype", "Ubuntu_64"] # set guest OS type
           vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"] # enables DNS resolution from guest using host's DNS
@@ -55,10 +76,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define "docker" do |docker|
 
       docker.vm.box = "hashicorp/boot2docker"
-      docker.vm.host_name = "docker"
 
       # eth1, this will be dockers "management" network
       docker.vm.network "private_network", ip: "192.168.99.100", adapter_ip: "192.168.99.1", netmask: "255.255.255.0", auto_config: true
+
+      docker.vm.hostname = "docker.stackinabox.io"
 
       docker.ssh.username = "docker"
       docker.ssh.password = "tcuser"
@@ -94,9 +116,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       docker.vm.provision "docker" do |d|
 
           d.pull_images "postgres:latest"
-          d.pull_images "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-deploy:6.2.0.2.723274"
-          d.pull_images "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-patterns-engine:6.2.1.0.753496"
-          d.pull_images "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-patterns-designer:6.2.1.0.753591"
+          d.pull_images "stackinabox/urbancode-deploy:6.2.1.0.ifix01.772195"
+          d.pull_images "stackinabox/urbancode-patterns-engine:6.2.1.0.748802"
+          d.pull_images "stackinabox/urbancode-patterns-designer:6.2.1.0.748638"
 
           d.run "patterns_db",
             image: "postgres:latest",
@@ -105,23 +127,27 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             args: "-e POSTGRES_PASSWORD=aWJtX3VjZHAK -e POSTGRES_USER=ibm_ucdp -e POSTGRES_DATABASE=ibm_ucdp"
 
           d.run "urbancode_deploy",
-            image: "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-deploy:6.2.0.2.723274",
+            image: "stackinabox/urbancode-deploy:6.2.1.0.ifix01.772195",
             daemonize: true,
             restart: "always",
             args: "-e LICENSE=accept -p 7918:7918 -p 8080:8080 -p 8443:8443"
 
           d.run "urbancode_patterns_engine",
-            image: "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-patterns-engine:6.2.1.0.753496",
+            image: "stackinabox/urbancode-patterns-engine:6.2.1.0.748802",
             daemonize: true,
             restart: "always",
             args: "-e PUBLIC_HOSTNAME=192.168.99.100 -e ALLOWED_AUTH_URIS=http://192.168.27.100:5000/v2.0 -p 8000:8000 -p 8003:8003 -p 8004:8004"
 
           d.run "urbancode_patterns_designer",
-            image: "stackinabox-docker-registry.bintray.io/stackinabox/urbancode-patterns-designer:6.2.1.0.753591",
+            image: "stackinabox/urbancode-patterns-designer:6.2.1.0.748638",
             daemonize: true,
             restart: "always",
-            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=192.168.99.100 -e KEYSTONE_URL=192.168.27.100 -p 9080:9080 -p 9443:9443 -p 7575:7575"
+            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=designer.stackinabox.io -e KEYSTONE_URL=devstack.stackinabox.io -p 9080:9080 -p 9443:9443 -p 7575:7575"
+
       end
 
     end
+
+    config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io'], '192.168.99.100' => ['docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io']}
+
 end
