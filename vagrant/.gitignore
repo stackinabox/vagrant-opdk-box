@@ -1,4 +1,6 @@
 # Vagrant
 .vagrant
 .DS_Store
+.docker/
+storage/
 config.json
