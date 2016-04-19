@@ -50,7 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     if Vagrant.has_plugin?("vagrant-vbguest")
-      config.vbguest.auto_update = true
+      config.vbguest.auto_update = false
     end
 
     # disabling the default shared /vagrant folder in this vm
@@ -71,7 +71,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.ssh.insert_key = true
 
       # install bluebox theme
-      openstack.vm.provision "shell", inline: $install_bluebox_theme
+      #openstack.vm.provision "shell", inline: $install_bluebox_theme
 
       # Copy docker registry credentials
       openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
@@ -94,6 +94,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "shell", inline: $mirror_docker
 
       openstack.vm.provision "docker" do |d|
+
+	      d.run "registry-frontend",
+	        image: "konradkleine/docker-registry-frontend:v2",
+	        daemonize: true,
+	        restart: "always",
+	        args: "-p 4080:80 -e ENV_DOCKER_REGISTRY_HOST=192.168.27.100 -e ENV_DOCKER_REGISTRY_PORT=4000 -e ENV_MODE_BROWSE_ONLY=true"
 
           d.run "patterns_db",
             image: "postgres:latest",
