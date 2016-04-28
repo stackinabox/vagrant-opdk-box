@@ -80,7 +80,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "shell", inline: $install_docker
 
       # run docker registry mirror first
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_registry", type:"docker" do |d|
 
           d.run "registry",
             image: "registry:2",
@@ -93,7 +93,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # configure docker to use local registry mirror
       openstack.vm.provision "shell", inline: $mirror_docker
 
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_ucd", type:"docker" do |d|
 
 	      d.run "registry-frontend",
 	        image: "konradkleine/docker-registry-frontend:v2",
@@ -123,7 +123,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             image: "stackinabox/urbancode-patterns-designer:6.2.1.0.748638",
             daemonize: true,
             restart: "always",
-            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=designer.stackinabox.io -e KEYSTONE_URL=devstack.stackinabox.io -p 9080:9080 -p 9443:9443 -p 7575:7575"
+            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=192.168.27.100 -e KEYSTONE_URL=devstack.stackinabox.io -p 9080:9080 -p 9443:9443 -p 7575:7575"
 
       end
 
