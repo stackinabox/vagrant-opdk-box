@@ -80,7 +80,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "shell", inline: $install_docker
 
       # run docker registry mirror first
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_registry", type:"docker" do |d|
 
           d.run "registry",
             image: "registry:2",
@@ -93,7 +93,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # configure docker to use local registry mirror
       openstack.vm.provision "shell", inline: $mirror_docker
 
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_ucd", type:"docker" do |d|
 
 	      d.run "registry-frontend",
 	        image: "konradkleine/docker-registry-frontend:v2",
