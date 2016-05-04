@@ -53,7 +53,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.ssh.insert_key = true
 
       # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
-      openstack.vm.provision "shell", name: "install-btheme", path: "../scripts/#{$os_theme}-theme/init.sh"
+      openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
 
       # Copy docker registry credentials
       openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
