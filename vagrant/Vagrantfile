@@ -7,12 +7,12 @@ VAGRANTFILE_API_VERSION = "2"
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
 
 $install_bluebox_theme = <<SCRIPT
-wget https://s3.amazonaws.com/horizon-branding/bluebox-u1.1.x.png
-cp bluebox-u1.1.x.png /opt/stack/horizon/static/dashboard/img/logo.png
-mv bluebox-u1.1.x.png /opt/stack/horizon/static/dashboard/img/logo-splash.png
+#wget https://s3.amazonaws.com/horizon-branding/bluebox-u1.1.x.png
+cp /vagrant/scripts/bluebox-theme/logo.png /opt/stack/horizon/static/dashboard/img/logo.png
+cp /vagrant/scripts/bluebox-theme/logo-splash.png /opt/stack/horizon/static/dashboard/img/logo-splash.png
 
-wget https://s3.amazonaws.com/horizon-branding/bluebox.ico
-mv bluebox.ico /opt/stack/horizon/static/dashboard/img/favicon.ico
+#wget https://s3.amazonaws.com/horizon-branding/bluebox.ico
+#mv bluebox.ico /opt/stack/horizon/static/dashboard/img/favicon.ico
 SCRIPT
 
 $install_docker = <<SCRIPT
@@ -54,7 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     # disabling the default shared /vagrant folder in this vm
-    config.vm.synced_folder "..", "/vagrant", type: "nfs", mount_options: ["nolock", "vers=3", "udp"]
+    config.vm.synced_folder "..", "/vagrant"#, type: "nfs", mount_options: ["nolock", "vers=3", "udp"]
 
     config.vm.define "openstack" do |openstack|
 
@@ -71,7 +71,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.ssh.insert_key = true
 
       # install bluebox theme
-      #openstack.vm.provision "shell", inline: $install_bluebox_theme
+      openstack.vm.provision "shell", inline: $install_bluebox_theme
 
       # Copy docker registry credentials
       openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
@@ -80,7 +80,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "shell", inline: $install_docker
 
       # run docker registry mirror first
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_registry", type:"docker" do |d|
 
           d.run "registry",
             image: "registry:2",
@@ -93,7 +93,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # configure docker to use local registry mirror
       openstack.vm.provision "shell", inline: $mirror_docker
 
-      openstack.vm.provision "docker" do |d|
+      openstack.vm.provision "setup_ucd", type:"docker" do |d|
 
 	      d.run "registry-frontend",
 	        image: "konradkleine/docker-registry-frontend:v2",
@@ -123,7 +123,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             image: "stackinabox/urbancode-patterns-designer:6.2.1.0.748638",
             daemonize: true,
             restart: "always",
-            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=designer.stackinabox.io -e KEYSTONE_URL=devstack.stackinabox.io -p 9080:9080 -p 9443:9443 -p 7575:7575"
+            args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=192.168.27.100 -e KEYSTONE_URL=192.168.27.100 -p 9080:9080 -p 9443:9443 -p 7575:7575"
 
       end
 
@@ -132,7 +132,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # Use VBoxManage to customize the VM.
           vb.customize ["modifyvm", :id, "--ioapic", "on"] # turn on I/O APIC
           vb.customize ["modifyvm", :id, "--cpus", "4"] # set number of vcpus
-          vb.customize ["modifyvm", :id, "--memory", "8192"] # set amount of memory allocated vm memory
+          vb.customize ["modifyvm", :id, "--memory", "10240"] # set amount of memory allocated vm memory
           vb.customize ["modifyvm", :id, "--hwvirtex", "on"] # turn on host hardware virtualization extensions (VT-x|AMD-V)
           vb.customize ["modifyvm", :id, "--ostype", "Ubuntu_64"] # set guest OS type
           vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"] # enables DNS resolution from guest using host's DNS
@@ -155,6 +155,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     end
 
-    config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io']}
+    # config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io']}
 
 end
