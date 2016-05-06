@@ -10,6 +10,23 @@ vagrant_dir = File.expand_path(File.dirname(__FILE__))
 personalization = File.expand_path(File.join(vagrant_dir, "Personalization"), __FILE__)
 load personalization
 
+$killheat = <<SCRIPT
+sed -i 's|/usr/local/bin/heat-engine|# /usr/local/bin/heat-engine|g' /opt/stack/devstack/stack-noscreenrc
+sed -i 's|/usr/local/bin/heat-api|# /usr/local/bin/heat-api|g' /opt/stack/devstack/stack-noscreenrc
+sed -i 's|/usr/local/bin/heat-api-cfn|# /usr/local/bin/heat-api-cfn|g' /opt/stack/devstack/stack-noscreenrc
+sed -i 's|/usr/local/bin/heat-api-cloudwatch|# /usr/local/bin/heat-api-cloudwatch|g' /opt/stack/devstack/stack-noscreenrc
+
+ps -o pid,args -e | grep -e /usr/local/bin/heat-api-cloudwatch \
+   -e /usr/local/bin/heat-api-cfn \
+   -e /usr/local/bin/heat-api \
+   -e /usr/local/bin/heat-engine | \
+   grep -v 'grep' | \
+   awk '{print "kill -9 " $1}' | \
+   sh
+
+sleep 60
+SCRIPT
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     unless Vagrant.has_plugin?("vagrant-multi-hostsupdater")
@@ -59,7 +76,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
       
       # Install docker
-      openstack.vm.provision "shell", name: "install-docker", path: "../scripts/docker/init.sh"
+      #openstack.vm.provision "shell", name: "install-docker", path: "../scripts/docker/init.sh"
 
       # run docker registry mirror first
       openstack.vm.provision "setup_registry", type: "docker" do |d|
@@ -75,6 +92,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       # configure docker to use local registry mirror
       openstack.vm.provision "shell", name: "enable-docker-registry-cache", path: "../scripts/docker/mirror.sh"
+
+      # kill the heat engine that's running on the host (it's causing problems with the urbancode_patterns_engine docker image)
+      openstack.vm.provision "shell", inline: $killheat
 
       openstack.vm.provision "setup_ucd", type: "docker" do |d|
 
@@ -92,9 +112,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           restart: "always",
           args: "-e POSTGRES_PASSWORD=aWJtX3VjZHAK -e POSTGRES_USER=ibm_ucdp -e POSTGRES_DATABASE=ibm_ucdp"
 
-        d.pull_images "stackinabox/urbancode-deploy:6.2.1.0.ifix01.772195"
+        d.pull_images "stackinabox/urbancode-deploy:6.2.1.1.781647"
         d.run "urbancode_deploy",
-          image: "stackinabox/urbancode-deploy:6.2.1.0.ifix01.772195",
+          image: "stackinabox/urbancode-deploy:6.2.1.1.781647",
           daemonize: true,
           restart: "always",
           args: "-e LICENSE=accept -p 7918:7918 -p 8080:8080 -p 8443:8443"
@@ -111,11 +131,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           image: "stackinabox/urbancode-patterns-engine:6.2.1.0.748802",
           daemonize: true,
           restart: "always",
-          args: "-e PUBLIC_HOSTNAME=192.168.27.100 -e ALLOWED_AUTH_URIS=http://192.168.27.100:5000/v2.0 -p 7000:8000 -p 7003:8003 -p 7004:8004"
+          args: "-e PUBLIC_HOSTNAME=192.168.27.100 -e ALLOWED_AUTH_URIS=http://192.168.27.100:5000/v2.0/ -p 8000:8000 -p 8003:8003 -p 8004:8004"
 
-        d.pull_images "stackinabox/urbancode-patterns-designer:6.2.1.0.748638"
+        d.pull_images "stackinabox/urbancode-patterns-designer:6.2.1.1.781695"
         d.run "urbancode_patterns_designer",
-          image: "stackinabox/urbancode-patterns-designer:6.2.1.0.748638",
+          image: "stackinabox/urbancode-patterns-designer:6.2.1.1.781695",
           daemonize: true,
           restart: "always",
           args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=192.168.27.100 -e KEYSTONE_URL=192.168.27.100 -p 9080:9080 -p 9443:9443 -p 7575:7575"
@@ -153,6 +173,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     end
 
-    config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io', 'registry.stackinabox.io']}
+    #config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io', 'registry.stackinabox.io']}
 
 end
