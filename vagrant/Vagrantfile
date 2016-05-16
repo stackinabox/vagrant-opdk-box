@@ -24,11 +24,10 @@ ps -o pid,args -e | grep -e /usr/local/bin/heat-api-cloudwatch \
    awk '{print "kill -9 " $1}' | \
    sh
 
-sleep 60
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-
+  
     unless Vagrant.has_plugin?("vagrant-multi-hostsupdater")
       raise 'vagrant-multi-hostsupdater plugin is required for'
       raise 'local server name resolution i.e. cloud9.stackinabox.io'
@@ -57,7 +56,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define "openstack" do |openstack|
 
       openstack.vm.box = "stackinabox/openstack"
-      openstack.vm.box_version = ">= 0.1.5.1"
+      openstack.vm.box_version = ">= 0.1.5.3"
 
       # eth1, this will be OpenStacks's "management" network
       openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
@@ -66,8 +65,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.network "private_network", ip: "172.24.4.225", adapter_ip: "172.24.4.225", netmask: "255.255.255.0", auto_config: false
 
       #openstack.vm.hostname = "openstack.stackinabox.io"
+      openstack.vm.hostname = "stackinabox"
 
       openstack.ssh.insert_key = true
+
+      # kill the heat engine that's running on the host
+      # this is a point in time solution until we get liberty compatible heat plugins
+      openstack.vm.provision "shell", inline: $killheat
 
       # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
       openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
@@ -92,9 +96,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       # configure docker to use local registry mirror
       openstack.vm.provision "shell", name: "enable-docker-registry-cache", path: "../scripts/docker/mirror.sh"
-
-      # kill the heat engine that's running on the host (it's causing problems with the urbancode_patterns_engine docker image)
-      openstack.vm.provision "shell", inline: $killheat
 
       openstack.vm.provision "setup_ucd", type: "docker" do |d|
 
@@ -151,25 +152,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           vb.customize ["modifyvm", :id, "--ioapic", "on"] # turn on I/O APIC
           vb.customize ["modifyvm", :id, "--cpus", "#{$cpus}"] # set number of vcpus
           vb.customize ["modifyvm", :id, "--memory", "#{$memory}"] # set amount of memory allocated vm memory
-          vb.customize ["modifyvm", :id, "--hwvirtex", "on"] # turn on host hardware virtualization extensions (VT-x|AMD-V)
           vb.customize ["modifyvm", :id, "--ostype", "Ubuntu_64"] # set guest OS type
           vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"] # enables DNS resolution from guest using host's DNS
           vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"] # turn on promiscuous mode on nic 3
           vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
           vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
           vb.customize ["modifyvm", :id, "--nictype3", "virtio"]
+          vb.customize ["modifyvm", :id, "--pae", "on"] # enables PAE
           vb.customize ["modifyvm", :id, "--longmode", "on"] # enables long mode (64 bit mode in GUEST OS)
           vb.customize ["modifyvm", :id, "--hpet", "on"] # enables a High Precision Event Timer (HPET)
+          vb.customize ["modifyvm", :id, "--hwvirtex", "on"] # turn on host hardware virtualization extensions (VT-x|AMD-V)
           vb.customize ["modifyvm", :id, "--nestedpaging", "on"] # if --hwvirtex is on, this enables nested paging
           vb.customize ["modifyvm", :id, "--largepages", "on"] # if --hwvirtex & --nestedpaging are on
           vb.customize ["modifyvm", :id, "--vtxvpid", "on"] # if --hwvirtex on
           vb.customize ["modifyvm", :id, "--vtxux", "on"] # if --vtux on (Intel VT-x only) enables unrestricted guest mode
           vb.customize ["modifyvm", :id, "--boot1", "disk"] # tells vm to boot from disk only
+          vb.customize ["modifyvm", :id, "--rtcuseutc", "on"] # lets the real-time clock (RTC) operate in UTC time
           vb.customize ["modifyvm", :id, "--audio", "none"]
           vb.customize ["modifyvm", :id, "--clipboard", "disabled"]
           vb.customize ["modifyvm", :id, "--usbehci", "off"]
           vb.customize ["modifyvm", :id, "--vrde", "off"]
       end
+
+      # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
+      openstack.vm.provision "shell", name: "init-aio", path: "../scripts/aio/init.sh"
 
     end
 
