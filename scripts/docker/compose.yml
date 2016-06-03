@@ -1,0 +1,80 @@
+version: '2'
+services:
+  blueprintdb:
+    image: postgres:9.6
+    container_name: blueprintdb
+    environment:
+      - POSTGRES_PASSWORD=aWJtX3VjZHAK 
+      - POSTGRES_USER=ibm_ucdp 
+      - POSTGRES_DATABASE=ibm_ucdp
+    ports:
+      - "5432:5432"
+    restart: always
+  ucd:
+    image: stackinabox/urbancode-deploy:6.2.1.1.787880
+    container_name: ucd
+    ports:
+      - "7918:7918"
+      - "8080:8080"
+      - "8443:8443"
+    network_mode: "host"
+    environment:
+      - LICENSE=accept
+      - ADD_CLOUD_AGENT_PKGS
+    restart: always
+  agent:
+    image: stackinabox/urbancode-deploy-agent:6.2.1.1.788429
+    container_name: agent
+    environment:
+      - UCD_SERVER=192.168.27.100
+      - USE_AS_DEFAULT_FOR_IMPORTS
+    depends_on:
+      - ucd
+    restart: always
+  heatengine:
+    image: stackinabox/urbancode-patterns-engine:6.2.1.0.748802
+    container_name: heatengine
+    ports:
+      - "8000:8000"
+      - "8003:8003"
+      - "8004:8004"
+    expose:
+      - "5000"
+      - "5672"
+      - "35357"
+    environment:
+      - ALLOWED_AUTH_URIS=http://192.168.27.100:5000/v2.0/
+    restart: always
+  blueprintdesigner:
+    image: stackinabox/urbancode-patterns-designer:6.2.1.1.787911
+    container_name: blueprintdesigner
+    ports:
+      - "9080:9080" 
+      - "9443:9443" 
+      - "7575:7575"
+    network_mode: "host"
+    depends_on:
+      - blueprintdb
+      - ucd
+      - heatengine
+    environment:
+      - WEB_SERVER_HOSTNAME=192.168.27.100
+      - KEYSTONE_URL=http://192.168.27.100:5000/v2.0/
+      - KEYSTONE_ADMIN_USER=admin 
+      - KEYSTONE_ADMIN_PASS=labstack
+      - KEYSTONE_ADMIN_TENANT=admin 
+      - KEYSTONE_USER=demo 
+      - KEYSTONE_PASS=labstack 
+      - KEYSTONE_TENANT=demo 
+      - KEYSTONE_DOMAIN=Default
+      - DATABASE_HOST=192.168.27.100
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=ibm_ucdp 
+      - DATABASE_USER=ibm_ucdp 
+      - DATABASE_PASS=aWJtX3VjZHAK
+      - ENGINE_HOST=192.168.27.100
+      - DEPLOY_SERVER_URL=http://192.168.27.100:8080
+      - DOCKER_HOST=192.168.27.100
+      - DOCKER_PORT=2376
+      - DOCKER_PROTO=http
+    restart: always

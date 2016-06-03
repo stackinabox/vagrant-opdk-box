@@ -24,6 +24,7 @@ ps -o pid,args -e | grep -e /usr/local/bin/heat-api-cloudwatch \
    awk '{print "kill -9 " $1}' | \
    sh
 
+sleep 30
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
@@ -46,6 +47,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       raise 'entries we create when you shutdown this vagrant environment'
     end
 
+    if Vagrant.has_plugin?("vagrant-cachier")
+
+       # cache at the base box level
+       config.cache.scope = :box
+
+       # if $use_nfs
+       #   config.cache.synced_folder_opts = {
+       #     type: :nfs,
+       #     mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
+       #   }
+       # end
+
+    else
+       print "vagrant-cachier plugin has not been found."
+       print "You can install it by `vagrant plugin install vagrant-cachier`"
+       exit 22
+    end
+
     if Vagrant.has_plugin?("vagrant-vbguest")
       config.vbguest.auto_update = false
     end
@@ -56,7 +75,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define "openstack" do |openstack|
 
       openstack.vm.box = "stackinabox/openstack"
-      openstack.vm.box_version = ">= 0.1.5.3"
+      openstack.vm.box_version = ">= 0.1.5.6"
 
       # eth1, this will be OpenStacks's "management" network
       openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
@@ -65,7 +84,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.network "private_network", ip: "172.24.4.225", adapter_ip: "172.24.4.225", netmask: "255.255.255.0", auto_config: false
 
       #openstack.vm.hostname = "openstack.stackinabox.io"
-      openstack.vm.hostname = "stackinabox"
 
       openstack.ssh.insert_key = true
 
@@ -78,75 +96,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       # Copy docker registry credentials
       openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
-      
-      # Install docker
-      #openstack.vm.provision "shell", name: "install-docker", path: "../scripts/docker/init.sh"
 
-      # run docker registry mirror first
-      openstack.vm.provision "setup_registry", type: "docker" do |d|
-
-          d.pull_images "registry:2"
-          d.run "registry",
-            image: "registry:2",
-            daemonize: true,
-            restart: "always",
-            args: "-p 4000:5000 -v /vagrant/scripts/docker/registry:/var/lib/registry -v /vagrant/scripts/docker/config.yml:/etc/docker/registry/config.yml" 
-
-      end
-
-      # configure docker to use local registry mirror
-      openstack.vm.provision "shell", name: "enable-docker-registry-cache", path: "../scripts/docker/mirror.sh"
-
-      openstack.vm.provision "setup_ucd", type: "docker" do |d|
-
-        d.pull_images "konradkleine/docker-registry-frontend:v2"
-	      d.run "registry-frontend",
-	        image: "konradkleine/docker-registry-frontend:v2",
-	        daemonize: true,
-	        restart: "always",
-	        args: "-p 4080:80 -e ENV_DOCKER_REGISTRY_HOST=192.168.27.100 -e ENV_DOCKER_REGISTRY_PORT=4000 -e ENV_MODE_BROWSE_ONLY=true"
-
-        d.pull_images "postgres:latest"
-        d.run "patterns_db",
-          image: "postgres:latest",
-          daemonize: true,
-          restart: "always",
-          args: "-e POSTGRES_PASSWORD=aWJtX3VjZHAK -e POSTGRES_USER=ibm_ucdp -e POSTGRES_DATABASE=ibm_ucdp"
-
-        d.pull_images "stackinabox/urbancode-deploy:6.2.1.1.781647"
-        d.run "urbancode_deploy",
-          image: "stackinabox/urbancode-deploy:6.2.1.1.781647",
-          daemonize: true,
-          restart: "always",
-          args: "-e LICENSE=accept -p 7918:7918 -p 8080:8080 -p 8443:8443"
-
-        d.pull_images "stackinabox/urbancode-deploy-agent:6.2.1.1.781554"
-        d.run "urbancode_deploy_agent",
-          image: "stackinabox/urbancode-deploy-agent:6.2.1.1.781554",
-          daemonize: true,
-          restart: "always",
-          args: "-e UCD_SERVER=192.168.27.100 --name localagent"
-
-        d.pull_images "stackinabox/urbancode-patterns-engine:6.2.1.0.748802"
-        d.run "urbancode_patterns_engine",
-          image: "stackinabox/urbancode-patterns-engine:6.2.1.0.748802",
-          daemonize: true,
-          restart: "always",
-          args: "-e PUBLIC_HOSTNAME=192.168.27.100 -e ALLOWED_AUTH_URIS=http://192.168.27.100:5000/v2.0/ -p 8000:8000 -p 8003:8003 -p 8004:8004"
-
-        d.pull_images "stackinabox/urbancode-patterns-designer:6.2.1.1.781695"
-        d.run "urbancode_patterns_designer",
-          image: "stackinabox/urbancode-patterns-designer:6.2.1.1.781695",
-          daemonize: true,
-          restart: "always",
-          args: "--link patterns_db:database --link urbancode_patterns_engine:engine --link urbancode_deploy:deploy -e WEB_SERVER_HOSTNAME=192.168.27.100 -e KEYSTONE_URL=192.168.27.100 -p 9080:9080 -p 9443:9443 -p 7575:7575"
-
-      end
+      openstack.vm.provision :docker
+      openstack.vm.provision :docker_compose, yml: "/vagrant/scripts/docker/compose.yml",
+          command_options: { up: "-d --timeout 10"}, run: "always"
 
       openstack.vm.provider :virtualbox do |vb|
           # vb.gui = true
 
-          vb.linked_clone = true# if Vagrant::VERSION =~ /^1.8/
+          #vb.linked_clone = true# if Vagrant::VERSION =~ /^1.8/
           
           # Use VBoxManage to customize the VM.
           vb.customize ["modifyvm", :id, "--ioapic", "on"] # turn on I/O APIC
