@@ -26,3 +26,33 @@ source /home/vagrant/openrc
 echo "Open port 22 by default in OpenStack Security Group Rules"
 nova secgroup-add-group-rule default default tcp 22 22
 
+# setup vagrant user with ssh keys
+mkdir -p ~vagrant/.ssh
+ssh-keygen -t rsa -N "" -f ~vagrant/.ssh/id_rsa -C "vagrant@stackinabox.io"
+
+# create new keypair on openstack for the 'admin' user using vagrants ssh pub/priv keys
+nova keypair-add --pub-key ~vagrant/.ssh/id_rsa.pub --key-type ssh admin
+
+public_key=`cat ~vagrant/.ssh/id_rsa.pub`
+private_key=`cat ~vagrant/.ssh/id_rsa`
+
+# setup root and vagrant user's for no-password login via ssh keys
+echo | sudo /bin/sh <<EOF
+mkdir -p /root/.ssh
+echo '#{private_key}' > /root/.ssh/id_rsa
+chmod 600 /root/.ssh/id_rsa
+echo '#{ops_private_key}' > /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+echo '#{ops_private_key}' > /root/.ssh/id_rsa.pub
+chmod 644 /root/.ssh/id_rsa.pub
+EOF
+
+# turn off strict host key checking for the vagrant user
+echo 'Host *' > ~vagrant/.ssh/config
+echo StrictHostKeyChecking no >> ~vagrant/.ssh/config
+chown -R vagrant: ~vagrant/.ssh
+
+sudo bash -c "echo 'Host *' > /root/.ssh/config"
+sudo bash -c "echo StrictHostKeyChecking no >> /root/.ssh/config"
+sudo bash -c "chown -R root: /root/.ssh"
+
