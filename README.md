@@ -1,12 +1,12 @@
-####Welcome to **stackinabox.io**
+# Welcome to **stackinabox.io**
 
-### GETTING STARTED
+## GETTING STARTED
 
 This vagrant project will stand up a single Ubuntu 14.04 running OpenStack Liberty and Docker using Virtualbox.
 
-## Set Up Instructions
+### Set Up Instructions
 
-# Prerequisites  
+#### Prerequisites  
 
   - Oracle VirtualBox https://www.virtualbox.org/wiki/Downloads  
   - Vagrant https://www.vagrantup.com/downloads.html  
@@ -31,7 +31,7 @@ This vagrant project will stand up a single Ubuntu 14.04 running OpenStack Liber
 
 After executing the above you can open your local web browser to http://192.168.27.100:9080/landscaper and login with demo/labstack
 
-# Access Information
+#### Access Information
 
  - OpenStack (DevStack) 
 	 - available at http://192.168.27.100 
