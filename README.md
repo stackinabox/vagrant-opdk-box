@@ -41,6 +41,8 @@ After executing the above you can open your local web browser to http://192.168.
 #### Install Example JKE Banking Application  
 
 ````
+	cd stackinabox.io/vagrant
+
 	# import the example JKE Banking Application automation
 	vagrant ssh 
 	cd /vagrant/patterns
@@ -52,6 +54,8 @@ After executing the above you can open your local web browser to http://192.168.
 #### Halt the running environment without loosing any data/work  
 
 ````
+	cd stackinabox.io/vagrant
+
 	# halt the running vagrant environment without loosing any data
 	vagrant halt
 ````
@@ -59,6 +63,8 @@ After executing the above you can open your local web browser to http://192.168.
 #### Resume the running environment with all previous data/work restored  
 
 ````
+	cd stackinabox.io/vagrant
+
 	# resume the running vagrant environment with all previous data/work restored
 	# relies on having previously run 'vagrant halt'
 	vagrant up
@@ -67,6 +73,8 @@ After executing the above you can open your local web browser to http://192.168.
 #### Destroy vagrant environment and restart from begining (will loose all existing data/work)  
 
 ````
+	cd stackinabox.io/vagrant
+	
 	# destroy existing enviornment and restart from scratch (will loose any existing data/work)
 	vagrant destroy
 	vagrant up
