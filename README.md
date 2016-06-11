@@ -25,12 +25,22 @@ It's planned to add further Docker images to this vagrant setup to support many 
     # install a few required vagrant plugins
     vagrant plugin install vagrant-cachier
     vagrant plugin install vagrant-docker-compose
+````
 
+#### Getting Started  
+
+````
     # stand up the OpenStack and UrbanCode environment
 	git clone https://github.com/stackinabox/stackinabox.io.git 
 	cd stackinabox.io/vagrant
 	vagrant up
+````
 
+After executing the above you can open your local web browser to http://192.168.27.100:9080/landscaper and login with demo/labstack.  The demo user is intended to be the user primarily used for building your automation.  The demo user belongs to a 'demo' team in the UrbanCode Blueprint Designer and has it's own tenant in OpenStack that will be used to run any automation provisioned through the Blueprint Designer on the OpenStack server when logged in as the demo user.  Additional user login information is provided below, under the **Access Information** section, to gain access to the administration views for both the Blueprint Designer as well as for the OpenStack server.
+
+#### Install Example JKE Banking Application  
+
+````
 	# import the example JKE Banking Application automation
 	vagrant ssh 
 	cd /vagrant/patterns
@@ -39,7 +49,28 @@ It's planned to add further Docker images to this vagrant setup to support many 
 	./init.sh
 ````
 
-After executing the above you can open your local web browser to http://192.168.27.100:9080/landscaper and login with demo/labstack.  The demo user is intended to be the user primarily used for building your automation.  The demo user belongs to a 'demo' team in the UrbanCode Blueprint Designer and has it's own tenant in OpenStack that will be used to run any automation provisioned through the Blueprint Designer on the OpenStack server when logged in as the demo user.  Additional user login information is provided below to gain access to the administration views for both the Blueprint Designer as well as for the OpenStack server.
+#### Halt the running environment without loosing any data/work  
+
+````
+	# halt the running vagrant environment without loosing any data
+	vagrant halt
+````
+
+#### Resume the running environment with all previous data/work restored  
+
+````
+	# resume the running vagrant environment with all previous data/work restored
+	# relies on having previously run 'vagrant halt'
+	vagrant up
+````
+
+#### Destroy vagrant environment and restart from begining (will loose all existing data/work)  
+
+````
+	# destroy existing enviornment and restart from scratch (will loose any existing data/work)
+	vagrant destroy
+	vagrant up
+````
 
 #### Access Information
 
