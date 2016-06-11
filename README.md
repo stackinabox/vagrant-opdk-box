@@ -10,9 +10,9 @@ Using this vagrant environment, it is hoped that you will share the automation t
 
 It's planned to add further Docker images to this vagrant setup to support many other deployment automation tools such as:  
 
-  - [Chef Server](https://www.chef.io/chef/)
-  - [Salt Stack](https://saltstack.com/)
-  - [Puppet](https://puppet.com/)
+  - [Chef Server](https://www.chef.io/chef/) (not yet implemented)
+  - [Salt Stack](https://saltstack.com/) (not yet implemented)
+  - [Puppet](https://puppet.com/) (not yet implemented)
 
 ### Set Up Instructions
 
@@ -26,9 +26,9 @@ It's planned to add further Docker images to this vagrant setup to support many 
     vagrant plugin install vagrant-cachier
     vagrant plugin install vagrant-docker-compose
 
+    # stand up the OpenStack and UrbanCode environment
 	git clone https://github.com/stackinabox/stackinabox.io.git 
 	cd stackinabox.io/vagrant
-	cp Personalization.dist Personalization
 	vagrant up
 
 	# import the example JKE Banking Application automation
@@ -39,7 +39,7 @@ It's planned to add further Docker images to this vagrant setup to support many 
 	./init.sh
 ````
 
-After executing the above you can open your local web browser to http://192.168.27.100:9080/landscaper and login with demo/labstack
+After executing the above you can open your local web browser to http://192.168.27.100:9080/landscaper and login with demo/labstack.  The demo user is intended to be the user primarily used for building your automation.  The demo user belongs to a 'demo' team in the UrbanCode Blueprint Designer and has it's own tenant in OpenStack that will be used to run any automation provisioned through the Blueprint Designer on the OpenStack server when logged in as the demo user.  Additional user login information is provided below to gain access to the administration views for both the Blueprint Designer as well as for the OpenStack server.
 
 #### Access Information
 
