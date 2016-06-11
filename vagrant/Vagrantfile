@@ -8,6 +8,9 @@ Vagrant.require_version ">= 1.8"
 
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
 personalization = File.expand_path(File.join(vagrant_dir, "Personalization"), __FILE__)
+if not File.exist?(personalization)
+  FileUtils.cp(File.expand_path(File.join(vagrant_dir, "Personalization.dist"), __FILE__), personalization)
+end
 load personalization
 
 $killheat = <<SCRIPT
@@ -28,24 +31,6 @@ sleep 30
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  
-    unless Vagrant.has_plugin?("vagrant-multi-hostsupdater")
-      raise 'vagrant-multi-hostsupdater plugin is required for'
-      raise 'local server name resolution i.e. cloud9.stackinabox.io'
-      raise 'needs to be overriden on the host to point to the'
-      raise 'instance running locally.'
-      raise ''
-      raise 'Install plugin via:'
-      raise ''
-      raise 'vagrant plugin install vagrant-multi-hostsupdater'
-      raise ''
-      raise '### NOTE ###'
-      raise ''
-      raise 'You may be prompted to grant permissions to the vagrant'
-      raise 'application to allow us to write to your /etc/hosts file'
-      raise 'Please grant the permission. We promise to remove any'
-      raise 'entries we create when you shutdown this vagrant environment'
-    end
 
     if Vagrant.has_plugin?("vagrant-cachier")
 
@@ -60,8 +45,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
        # end
 
     else
-       print "vagrant-cachier plugin has not been found."
-       print "You can install it by `vagrant plugin install vagrant-cachier`"
+       print "\n"
+       print "vagrant-cachier plugin has not been found.\n"
+       print "Please install it by running `vagrant plugin install vagrant-cachier`\n"
        exit 22
     end
 
@@ -94,12 +80,23 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
       openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
 
-      # Copy docker registry credentials
-      openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
+      # Copy docker registry credentials if they exist
+	  if File.exist?(File.expand_path(File.join("~/.docker", "config.json"), __FILE__))
+      	openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
+      end
 
-      openstack.vm.provision :docker
-      openstack.vm.provision :docker_compose, yml: "/vagrant/scripts/docker/compose.yml",
-          command_options: { up: "-d --timeout 10"}, run: "always"
+      if Vagrant.has_plugin?("vagrant-docker-compose")
+        openstack.vm.provision :docker
+        openstack.vm.provision :docker_compose, 
+      	  yml: "/vagrant/scripts/docker/compose.yml",
+          command_options: { up: "-d --timeout 10"}, 
+          run: "always"
+      else
+      	print "\n"
+        print "vagrant-docker-compose plugin has not been found.\n"
+        print "Please install it by running `vagrant plugin install vagrant-docker-compose`\n"
+        exit 22
+      end
 
       openstack.vm.provider :virtualbox do |vb|
           # vb.gui = true
@@ -136,7 +133,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       openstack.vm.provision "shell", name: "init-aio", path: "../scripts/aio/init.sh"
 
     end
-
-    #config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io', 'registry.stackinabox.io']}
 
 end
