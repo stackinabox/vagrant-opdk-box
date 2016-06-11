@@ -1,12 +1,12 @@
 ####Welcome to **stackinabox.io**
 
-## GETTING STARTED
+### GETTING STARTED
 
 This vagrant project will stand up a single Ubuntu 14.04 running OpenStack Liberty and Docker using Virtualbox.
 
-# Set Up Instructions
+## Set Up Instructions
 
-### Prerequisites  
+# Prerequisites  
 
   - Oracle VirtualBox https://www.virtualbox.org/wiki/Downloads  
   - Vagrant https://www.vagrantup.com/downloads.html  
@@ -16,7 +16,7 @@ This vagrant project will stand up a single Ubuntu 14.04 running OpenStack Liber
     vagrant plugin install vagrant-cachier
     vagrant plugin install vagrant-docker-compose
     vagrant plugin install vagrant-multi-hostupdater
-    
+
 	git clone https://github.com/stackinabox/stackinabox.io.git 
 	cd stackinabox.io/vagrant
 	cp Personalization.dist Personalization
