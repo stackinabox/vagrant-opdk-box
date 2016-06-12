@@ -83,7 +83,7 @@ After executing the above you can open your local web browser to http://192.168.
 #### Access Information
 
  - OpenStack (DevStack) 
-	 - available at http://192.168.27.100 
+	 - available at http://openstack.stackinabox.io 
 		 - username: demo
 		 - password: labstack  
 		 _____________________  
@@ -92,10 +92,10 @@ After executing the above you can open your local web browser to http://192.168.
  
  - Docker local passthrough image registry cache (pre-configured to use cache)
     - Registry Web Console
-	  - available at http://192.168.27.100:4080
+	  - available at http://docker.stackinabox.io:4080
 	 
  - UrbanCode Deploy Server
-	 - available at http://192.168.27.100:8080
+	 - available at http://ucd.stackinabox.io:8080
 		 - username: admin
 		 - password: admin
 		 
@@ -103,12 +103,14 @@ After executing the above you can open your local web browser to http://192.168.
 	 - localagent (default for imports)
 	 
  - UrbanCode Deploy heat Engine
-	 - running at http://192.168.27.100:8004
+	 - running at http://heat.stackinabox.io:8004
 	 
  - UrbanCode Deploy Blueprint Designer (HEAT Designer)
-	 - available at http://192.168.27.100:9080/landscaper
+	 - available at http://designer.stackinabox.io:9080/landscaper
 	     - username: demo
 	     - password: labstack  
 	     _____________________  
 		 - username: ucdpadmin
 		 - password: ucdpadmin
+
+		 

@@ -3,6 +3,8 @@ services:
   blueprintdb:
     image: postgres:9.6
     container_name: blueprintdb
+    domainname: stackinabox.io
+    hostname: blueprintdb
     environment:
       - POSTGRES_PASSWORD=aWJtX3VjZHAK 
       - POSTGRES_USER=ibm_ucdp 
@@ -13,6 +15,8 @@ services:
   ucd:
     image: stackinabox/urbancode-deploy:6.2.1.1.787880
     container_name: ucd
+    domainname: stackinabox.io
+    hostname: ucd
     ports:
       - "7918:7918"
       - "8080:8080"
@@ -24,6 +28,8 @@ services:
   agent:
     image: stackinabox/urbancode-deploy-agent:6.2.1.1.788429
     container_name: agent
+    domainname: stackinabox.io
+    hostname: agent
     environment:
       - UCD_SERVER=192.168.27.100
       - USE_AS_DEFAULT_FOR_IMPORTS
@@ -33,6 +39,8 @@ services:
   heatengine:
     image: stackinabox/urbancode-patterns-engine:6.2.1.0.748802
     container_name: heatengine
+    domainname: stackinabox.io
+    hostname: heat
     ports:
       - "8000:8000"
       - "8003:8003"
@@ -47,6 +55,8 @@ services:
   blueprintdesigner:
     image: stackinabox/urbancode-patterns-designer:6.2.1.1.787911
     container_name: blueprintdesigner
+    domainname: stackinabox.io
+    hostname: designer
     ports:
       - "9080:9080" 
       - "9443:9443" 
@@ -77,3 +87,5 @@ services:
       - DOCKER_PORT=2376
       - DOCKER_PROTO=http
     restart: always
+    volumes:
+      - /vagrant/tutorial/:/opt/ibm-ucd-patterns/opt/tomcat/webapps/landscaper/static/6.2.1.1.787911/js/tutorial/nls/

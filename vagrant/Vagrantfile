@@ -134,4 +134,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     end
 
+    if Vagrant.has_plugin?("vagrant-multi-hostsupdater")
+      config.multihostsupdater.aliases = {'192.168.27.100' => ['openstack.stackinabox.io', 'bluebox.stackinabox.io', 'docker.stackinabox.io', 'heat.stackinabox.io', 'designer.stackinabox.io', 'ucd.stackinabox.io', 'registry.stackinabox.io', 'docker.stackinabox.io', 'agent.stackinabox.io', 'blueprintdb.stackinabox.io']}
+    else
+        print "\n"
+        print "vagrant-multi-hostsupdater plugin has not been found.\n"
+        print "Please install it by running `vagrant plugin install vagrant-multi-hostsupdater`\n"
+        exit 22
+    end
+
 end
