@@ -56,3 +56,8 @@ sudo bash -c "echo 'Host *' > /root/.ssh/config"
 sudo bash -c "echo StrictHostKeyChecking no >> /root/.ssh/config"
 sudo bash -c "chown -R root: /root/.ssh"
 
+cp /vagrant/scripts/tunnel/tunnel.sh /home/vagrant/
+chmod 755 /home/vagrant/tunnel.sh
+cp /vagrant/scripts/aws/aws-setup.sh /home/vagrant/
+chmod 755 /home/vagrant/aws-setup.sh
+

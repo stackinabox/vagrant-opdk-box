@@ -89,3 +89,16 @@ services:
     restart: always
     volumes:
       - /vagrant/tutorial/:/opt/ibm-ucd-patterns/opt/tomcat/webapps/landscaper/static/6.2.1.1.787911/js/tutorial/nls/
+  agent-relay:
+      image: stackinabox/urbancode-deploy-agent-relay:6.2.1.1.793046
+      container_name: agent-relay
+      domainname: stackinabox.io
+      hostname: agent-relay
+      ports:
+        - "20080:20080"
+        - "20081:20081"
+        - "7916:7916"
+      environment:
+        - UCD_SERVER=192.168.27.100
+      depends_on:
+        - blueprintdesigner

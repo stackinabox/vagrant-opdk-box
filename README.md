@@ -25,6 +25,7 @@ It's planned to add further Docker images to this vagrant setup to support many 
     # install a few required vagrant plugins
     vagrant plugin install vagrant-cachier
     vagrant plugin install vagrant-docker-compose
+    vagrant plugin install vagrant-multi-hostsupdater
 ````
 
 #### Getting Started  
@@ -50,6 +51,8 @@ After executing the above you can open your local web browser to http://192.168.
 	cd jke
 	./init.sh
 ````
+
+If you have never used UrbanCode Deploy or the UrbanCode Blueprint Designer before you can open your browser to the url that is displated at the end of the JKE Banking Application's init.sh script you ran above (http://192.168.27.100:9080/landscaper/view/tutorial) and login as demo/labstack user.  You will see a "guided tour" frame on the right side of your browser window.  Just follow the instructions and it will guide you through how to deploy the JKE Banking Application using UrbanCode Deploy and UrbanCode Blueprint Designer.
 
 #### Halt the running environment without loosing any data/work  
 
@@ -78,6 +81,17 @@ After executing the above you can open your local web browser to http://192.168.
 	# destroy existing enviornment and restart from scratch (will loose any existing data/work)
 	vagrant destroy
 	vagrant up
+````
+
+#### Connect UrbanCode Blueprint Designer to Amazon's AWS
+
+````
+	cd stackinabox.io/vagrant
+	vagrant up
+	vagrant ssh
+
+	# once logged into the vagrant box using the previous 'vagrant ssh' command
+	./aws-setup.sh
 ````
 
 #### Access Information
