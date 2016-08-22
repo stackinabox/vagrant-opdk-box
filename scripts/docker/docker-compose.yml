@@ -1,0 +1,158 @@
+version: '2'
+networks:
+  ucd:
+services:
+  blueprintdb:
+    image: postgres:9.6
+    container_name: blueprintdb
+    environment:
+      - POSTGRES_PASSWORD=aWJtX3VjZHAK
+      - POSTGRES_USER=ibm_ucdp
+      - POSTGRES_DATABASE=ibm_ucdp
+    ports:
+      - "5432:5432"
+    restart: always
+  ucddb:
+    image: mysql:5.6
+    container_name: ucddb
+    environment:
+      - MYSQL_ROOT_PASSWORD=aWJtX3VjZHAK
+      - MYSQL_USER=ibm_ucd
+      - MYSQL_PASSWORD=passw0rd
+      - MYSQL_DATABASE=ibm_ucd
+    ports:
+      - "23306:3306"
+    restart: always
+  ucd:
+    build:
+      context: https://github.com/stackinabox/docker-uc-deploy.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${MEDIA_HOST}/ibm-ucd-${UCDTAG}.zip
+        ARTIFACT_VERSION: ${UCDTAG}
+    image: stackinabox/urbancode-deploy:${UCDTAG}
+    container_name: ucd
+    ports:
+      - "7918:7918"
+      - "8080:8080"
+      - "8443:8443"
+    networks:
+      - ucd
+      - default
+    depends_on:
+      - ucddb
+      - rlks
+    environment:
+      - LICENSE=accept
+      - DATABASE_USER=ibm_ucd
+      - DATABASE_PASS=passw0rd
+      - DATABASE_NAME=ibm_ucd
+      - DATABASE_PORT=3306
+      - DATABASE_HOST=ucddb
+      - RCL_URL=27000@rlks
+      - DEPLOY_SERVER_URL=http://ucd:8080
+      - DEPLOY_SERVER_HOSTNAME=ucd
+    restart: always
+  agent:
+    build:
+      context: https://github.com/stackinabox/docker-uc-deploy-agent.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${MEDIA_HOST}/ibm-ucd-agent-${UCDTAG}.zip
+        ARTIFACT_VERSION: ${UCDTAG}
+    image: stackinabox/urbancode-deploy-agent:${UCDTAG}
+    container_name: agent
+    environment:
+      - UCD_SERVER=ucd
+      - USE_AS_DEFAULT_FOR_IMPORTS
+    depends_on:
+      - ucd
+    restart: always
+  heatengine:
+    build:
+      context: https://github.com/sudhakarau1/docker-uc-pattern-engine.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${MEDIA_HOST}/ibm-ucd-patterns-engine-${ENGINETAG}.tgz
+    image: stackinabox/urbancode-patterns-engine:${ENGINETAG}
+    container_name: heatengine
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ${ENVVARS_VOL}:/root/envvars.txt:ro
+    ports:
+      - "8000:8000"
+      - "8003:8003"
+      - "8004:8004"
+    expose:
+      - "5000"
+      - "5672"
+      - "35357"
+    restart: always
+  blueprintdesigner:
+    build:
+      context: https://github.com/stackinabox/docker-uc-pattern-designer.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${MEDIA_HOST}/ibm-ucd-patterns-web-designer-linux-x86_64-${DESIGNERTAG}.tgz
+        ARTIFACT_VERSION: ${DESIGNERTAG}
+    image: stackinabox/urbancode-patterns-designer:${DESIGNERTAG}
+    container_name: blueprintdesigner
+    ports:
+      - "9080:9080"
+      - "9443:9443"
+      - "7575:7575"
+    networks:
+      - ucd
+      - default
+    depends_on:
+      - blueprintdb
+      - ucd
+      - heatengine
+    environment:
+      - WEB_SERVER_HOSTNAME=blueprintdesigner
+      - KEYSTONE_URL=http://heatengine:5000/v2.0
+      - KEYSTONE_ADMIN_USER=admin
+      - KEYSTONE_ADMIN_PASS=labstack
+      - KEYSTONE_ADMIN_TENANT=admin
+      - KEYSTONE_USER=demo
+      - KEYSTONE_PASS=labstack
+      - KEYSTONE_TENANT=demo
+      - KEYSTONE_DOMAIN=Default
+      - DATABASE_HOST=blueprintdb
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=ibm_ucdp
+      - DATABASE_USER=ibm_ucdp
+      - DATABASE_PASS=aWJtX3VjZHAK
+      - ENGINE_HOST=heatengine
+      - DEPLOY_SERVER_URL=http://ucd:8080
+      - DOCKER_HOST=${DOCKER_HOSTNAME}
+      - DOCKER_PORT=2376
+      - DOCKER_PROTO=http
+    restart: always
+    volumes:
+      - ${TUTORIAL_VOL}:/opt/ibm-ucd-patterns/opt/tomcat/webapps/landscaper/static/${DESIGNERTAG}/js/tutorial/nls/
+  agent-relay:
+    build:
+      context: https://github.com/stackinabox/docker-uc-deploy-agent-relay.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${MEDIA_HOST}/agent-relay-${UCDTAG}.zip
+        ARTIFACT_VERSION: ${UCDTAG}
+    image: stackinabox/urbancode-deploy-agent-relay:${UCDTAG}
+    container_name: agent-relay
+    ports:
+      - "20080:20080"
+      - "20081:20081"
+      - "7916:7916"
+    environment:
+      - UCD_SERVER=ucd
+    depends_on:
+      - blueprintdesigner
+  rlks:
+    build:
+      context: https://github.com/stackinabox/docker-ibm-rlks.git
+      args:
+        ARTIFACT_DOWNLOAD_URL: ${RLKS_URL}
+    image: stackinabox/docker-ibm-rlks:8.1.4
+    container_name: rlks
+    ports:
+      - "27000:27000"
+      - "27001:27001"
+    volumes:
+      - ${RLKS_VOL}:/usr/local/flexlm/licenses
