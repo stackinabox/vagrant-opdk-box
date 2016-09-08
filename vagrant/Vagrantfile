@@ -61,7 +61,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define "openstack" do |openstack|
 
       openstack.vm.box = "stackinabox/openstack"
-      openstack.vm.box_version = ">= 0.2.2"
+      openstack.vm.box_version = ">= 0.2.3"
 #      openstack.vm.box = "stackinabox.box"
 
       # eth1, this will be OpenStacks's "management" network
