@@ -2,7 +2,7 @@
 $os_theme = "bluebox"
 
 # Use NFS? (won't work on windows)
-$use_nfs = true
+$use_nfs = false
 
 # Number of CPU's (min 2, recommend 4) adjust to your machine
 $cpus = 4
