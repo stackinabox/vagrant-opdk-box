@@ -1,12 +1,9 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-ENV["LC_ALL"] = "en_US.UTF-8"
-
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-# requires vagrant version >= 1.8.5 
 Vagrant.require_version ">= 1.8.5"
 
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
@@ -18,37 +15,15 @@ load personalization
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-    if Vagrant.has_plugin?("vagrant-cachier")
-
-       # cache at the base box level
-       config.cache.scope = :box
-
-       if $use_nfs
-         config.cache.synced_folder_opts = {
-           type: :nfs,
-           mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
-         }
-       end
-
-    else
-       print "\n"
-       print "vagrant-cachier plugin has not been found.\n"
-       print "Please install it by running `vagrant plugin install vagrant-cachier`\n"
-       exit 22
-    end
-
-    # disable updating the vbox guest additions in the vm
     if Vagrant.has_plugin?("vagrant-vbguest")
       config.vbguest.auto_update = false
     end
 
-    # disabling the default shared /vagrant folder in this vm
-    config.vm.synced_folder "..", "/vagrant"#, type: "nfs", mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
-
     config.vm.define "openstack" do |openstack|
 
-      openstack.vm.box = "stackinabox/openstack"
-      openstack.vm.box_version = ">= 0.2.3"
+      # openstack.vm.box = "stackinabox/opdk"
+      # openstack.vm.box_version = ">= 0.1.1"
+      openstack.vm.box = "opdk.box"
 
       # eth1, this will be OpenStacks's "management" network
       openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
@@ -58,33 +33,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       config.ssh.forward_agent = true
       config.ssh.insert_key = false
-      openstack.ssh.insert_key = false
-
-      # kill the heat engine that's running on the host (we use a docker image pre-loaded with UCD plugins)
-      openstack.vm.provision "shell", name: "disable-openstack-heat", path: "../scripts/aio/disable-embedded-heat.sh"
-
-      # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
-      openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
-
-      # Copy docker registry credentials if they exist (from host machine to vm)
-      if File.exist?(File.expand_path(File.join("~/.docker", "config.json"), __FILE__))
-      	openstack.vm.provision "file", source: "~/.docker/config.json", destination: "/home/vagrant/.docker/config.json"
-      end
-
-      if Vagrant.has_plugin?("vagrant-docker-compose")
-        openstack.vm.provision :docker
-        openstack.vm.provision :docker_compose, 
-      	  yml: "/vagrant/compose/urbancode/docker-compose.yml",
-          command_options: { up: "-d --timeout 10"}, 
-          run: "always",
-          project_name: "urbancode",
-          compose_version: "1.8.0"
-      else
-      	print "\n"
-        print "vagrant-docker-compose plugin has not been found.\n"
-        print "Please install it by running `vagrant plugin install vagrant-docker-compose`\n"
-        exit 22
-      end
 
       openstack.vm.provider :virtualbox do |vb|
           
@@ -113,9 +61,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           vb.customize ["modifyvm", :id, "--usbehci", "off"]
           vb.customize ["modifyvm", :id, "--vrde", "off"]
       end
-
-      # finalize settings for aio build
-      openstack.vm.provision "shell", name: "init-aio", path: "../scripts/aio/init.sh"
 
     end
 

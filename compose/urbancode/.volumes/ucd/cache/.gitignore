@@ -17,6 +17,7 @@
 /ecbin
 /artifacts
 *.zip
+*.tgz
 
 build.rc
 latest.txt

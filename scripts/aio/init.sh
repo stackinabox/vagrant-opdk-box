@@ -16,6 +16,14 @@ export DS_WEB_URL=http://192.168.27.100:8080
 export PATH=$PATH:/opt/udclient/
 EOF
 
+# add aws integration and ssh tunnel scripts to vagrant home directory
+cp /vagrant/scripts/tunnel/tunnel.sh /home/vagrant/
+chmod 755 /home/vagrant/tunnel.sh
+cp /vagrant/scripts/aws/aws-setup.sh /home/vagrant/
+chmod 755 /home/vagrant/aws-setup.sh
+
+# /bin/bash -c "/vagrant/scripts/aio/add-agent-install-packages.sh"
+
 # ARTIFACT_URL=http://artifacts.stackinabox.io/urbancode/ibm-ucd-patterns-engine
 # ARTIFACT_STREAM=latest
 # wget -Nv $ARTIFACT_URL/$ARTIFACT_STREAM.txt
@@ -122,9 +130,3 @@ EOF
 # sudo bash -c "echo 'Host *' > /root/.ssh/config"
 # sudo bash -c "echo StrictHostKeyChecking no >> /root/.ssh/config"
 # sudo bash -c "chown -R root: /root/.ssh"
-
-cp /vagrant/scripts/tunnel/tunnel.sh /home/vagrant/
-chmod 755 /home/vagrant/tunnel.sh
-cp /vagrant/scripts/aws/aws-setup.sh /home/vagrant/
-chmod 755 /home/vagrant/aws-setup.sh
-

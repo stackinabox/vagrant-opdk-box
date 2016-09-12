@@ -3,6 +3,7 @@
 !.gitignore
 !.git*
 !.travis.yml
+!/.volumes
 
 # ignore all temporary files and ahp specific files
 *.bak
