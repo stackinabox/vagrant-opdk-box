@@ -3,7 +3,8 @@
 echo "waiting on servers to complete startup process..."
 sleep 60
 
-echo "Configure udclient on box"
+
+/vagrant/compose/urbancode/wait-for-it.sh 192.168.27.100:8080 --timeout=0 --strict -- echo "Configure udclient on box"
 curl -O -s -u admin:admin -X GET http://192.168.27.100:8080/tools/udclient.zip
 sudo unzip udclient.zip -d /opt
 rm -rf udclient.zip

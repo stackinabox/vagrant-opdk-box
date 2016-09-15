@@ -1,7 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-ENV["LC_ALL"] = "en_US.UTF-8"
+ENV["LC_ALL"] = "C.UTF-8"
+ENV["LANG"] = "C.UTF-8"
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
@@ -47,8 +48,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "openstack" do |openstack|
 
-      openstack.vm.box = "stackinabox/openstack"
-      openstack.vm.box_version = ">= 0.2.3"
+      # openstack.vm.box = "stackinabox/openstack"
+      # openstack.vm.box_version = "= 0.9.4"
+      openstack.vm.box = "openstack.box"
 
       # eth1, this will be OpenStacks's "management" network
       openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
@@ -58,10 +60,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       config.ssh.forward_agent = true
       config.ssh.insert_key = false
-      openstack.ssh.insert_key = false
 
-      # kill the heat engine that's running on the host (we use a docker image pre-loaded with UCD plugins)
-      openstack.vm.provision "shell", name: "disable-openstack-heat", path: "../scripts/aio/disable-embedded-heat.sh"
+      # # kill the heat engine that's running on the host (we use a docker image pre-loaded with UCD plugins)
+      # openstack.vm.provision "shell", name: "disable-openstack-heat", path: "../scripts/aio/disable-embedded-heat.sh"
 
       # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
       openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
@@ -72,13 +73,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       end
 
       if Vagrant.has_plugin?("vagrant-docker-compose")
+        # sometimes is takes a second to get docker to startup
+        openstack.vm.provision "shell", inline: "sleep 20 || sudo systemctl restart docker.service || sleep 20", run: "always"
         openstack.vm.provision :docker
         openstack.vm.provision :docker_compose, 
       	  yml: "/vagrant/compose/urbancode/docker-compose.yml",
-          command_options: { up: "-d --timeout 10"}, 
-          run: "always",
+          command_options: { rm: "", up: "-d --no-recreate --timeout 10" }, 
           project_name: "urbancode",
-          compose_version: "1.8.0"
+          compose_version: "1.8.0",
+          env: { DOCKER_HOST: "192.168.27.100:2375" },
+          run: "always"
       else
       	print "\n"
         print "vagrant-docker-compose plugin has not been found.\n"

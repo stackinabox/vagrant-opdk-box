@@ -1,29 +1,33 @@
 #!/bin/bash -ux
 
 # delete all linux headers
-#dpkg --list | awk '{ print $2 }' | grep linux-headers | xargs apt-get -y purge
+#dpkg --list | awk '{ print $2 }' | grep linux-headers-4*- | grep -v `uname -r` | xargs apt-get -y purge
+sudo dpkg --list | awk '{ print $2 }' | grep linux-headers-4-* | grep -v 4.4.0-36 | sudo xargs apt-get purge
 
 # this removes specific linux kernels, such as
 # linux-image-3.11.0-15-generic but 
 # * keeps the current kernel
 # * does not touch the virtual packages, e.g.'linux-image-generic', etc.
 #
-#dpkg --list | awk '{ print $2 }' | grep 'linux-image-3.*-generic' | grep -v `uname -r` | xargs apt-get -y purge
+dpkg --list | awk '{ print $2 }' | grep 'linux-image-4.*-generic' | grep -v `uname -r` | sudo xargs apt-get -y purge
 
 # delete linux source
-#dpkg --list | awk '{ print $2 }' | grep linux-source | xargs apt-get -y purge
+dpkg --list | awk '{ print $2 }' | grep linux-source | sudo xargs apt-get -y purge
 
 # delete development packages
-sudo dpkg --list | awk '{ print $2 }' | grep -- '-dev$' | xargs sudo apt-get -qqy purge
+sudo dpkg --list | awk '{ print $2 }' | grep -- '-dev$' | sudo xargs apt-get -qqy purge
 
-# delete compilers and other development tools
-#apt-get -y purge cpp gcc g++
+# delete compilers and other development tools (can't do this otherwise dkms* dynamic kernel modules will be removed')
+#sudo apt-get -y purge cpp gcc g++
 
 # delete X11 libraries
-sudo apt-get -qqy purge libx11-data libxmuu1 libx11-6 libxext6
+sudo apt-get -qqy purge libx11-data x11-common
 
 # delete obsolete networking
 sudo apt-get -qqy purge ppp pppconfig pppoeconf
+
+# clean up other stuff
+sudo apt-get -qqy man xkb-data libx11-data eject locales radvd 
 
 # delete oddities
 sudo apt-get -qqy purge popularity-contest
@@ -71,11 +75,11 @@ history -c
 
 # Whiteout the swap partition to reduce box size 
 # Swap is disabled till reboot 
-# readonly swapuuid=$(/sbin/blkid -o value -l -s UUID -t TYPE=swap)
-# readonly swappart=$(readlink -f /dev/disk/by-uuid/"$swapuuid")
-# sudo swapoff /swapfile
-# sudo dd if=/dev/zero of=/swapfile bs=1M || echo "dd exit code $? is suppressed"
-# sudo mkswap /swapfile
+#readonly swapuuid=$(/sbin/blkid -o value -l -s UUID -t TYPE=swap)
+#readonly swappart=$(readlink -f /dev/disk/by-uuid/"$swapuuid")
+#swapoff /swapfile
+#dd if=/dev/zero of=/swapfile bs=1M || echo "dd exit code $? is suppressed" 
+#mkswap /swapfile
 
 # Zero disk
 sudo dd if=/dev/zero of=/EMPTY bs=1M
