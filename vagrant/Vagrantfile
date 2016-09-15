@@ -48,9 +48,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "openstack" do |openstack|
 
-      # openstack.vm.box = "stackinabox/openstack"
-      # openstack.vm.box_version = "= 0.9.4"
-      openstack.vm.box = "openstack.box"
+      openstack.vm.box = "stackinabox/openstack"
+      openstack.vm.box_version = "= 0.9.4"
 
       # eth1, this will be OpenStacks's "management" network
       openstack.vm.network "private_network", ip: "192.168.27.100", adapter_ip: "192.168.27.1", netmask: "255.255.255.0", auto_config: true
@@ -60,9 +59,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       config.ssh.forward_agent = true
       config.ssh.insert_key = false
-
-      # # kill the heat engine that's running on the host (we use a docker image pre-loaded with UCD plugins)
-      # openstack.vm.provision "shell", name: "disable-openstack-heat", path: "../scripts/aio/disable-embedded-heat.sh"
 
       # install bluebox or openstack theme based on environment variable os_theme setting in Personalization file
       openstack.vm.provision "shell", name: "install-theme", path: "../scripts/#{$os_theme}-theme/init.sh"
