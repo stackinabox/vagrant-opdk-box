@@ -16,6 +16,7 @@
 /lib
 /ecbin
 /artifacts
+/lxc-cloud-images
 *.zip
 
 build.rc

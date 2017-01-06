@@ -192,6 +192,7 @@ UCD_AGENT_RELAY_PRIVATE_HOST=`aws ec2 describe-instances --filters "Name=instanc
 # create ssh tunnel remote tunnel (forward Agent Relay ports 20080,7916 to this vm on ports 8081,7918)
 ./tunnel.sh .ssh/ucdp-demo-key.pem $UCD_AGENT_RELAY_PUBLIC_HOST $UCD_AGENT_RELAY_PRIVATE_HOST &>> aws-setup.log
 
+
 # create Amazon EC2 Cloud Provider in UCDP
 EC2_CLOUD_PROVIDER_ID=`curl -s -u ucdpadmin:ucdpadmin \
 http://192.168.27.100:9080/landscaper/security/cloudprovider/ | python -c \
