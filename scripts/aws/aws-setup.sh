@@ -215,7 +215,7 @@ if [[ "$EC2_CLOUD_PROVIDER_ID" == "" ]]; then
       \"properties\": [
         {
           \"name\": \"url\",
-          \"value\": \"http://192.168.27.100:5000/v2.0/\",
+          \"value\": \"http://192.168.27.100:8888/identity/v3\",
           \"secure\": false
         },{
           \"name\": \"timeoutMins\",
